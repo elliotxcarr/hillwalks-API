@@ -8,12 +8,18 @@ CORS(app)
 
 client = MongoClient("mongodb://localhost:27017/")
 db = client["walking_db"]
-collection = db["hillwalks"]
+walksCollection = db["hillwalks"]
+usersCollection = db["users"]
 
 @app.route("/walks", methods=["GET"])
 def get_walks():
-    walks = list(collection.find({}, {"_id": 0})) 
+    walks = list(walksCollection.find({}, {"_id": 0})) 
     return jsonify(walks)
+
+@app.route("/users", methods=["GET"])
+def get_users():
+    users = list(usersCollection.find({}, {"_id":0}))
+    return jsonify(users)
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
