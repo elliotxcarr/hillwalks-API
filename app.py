@@ -27,7 +27,7 @@ def get_users():
     users = list(usersCollection.find({}))
     
     for user in users:
-        user["_id"] = str(user["_id"])
+        user['id'] = str(user.pop('_id'))
     return jsonify(users)
 
 
@@ -46,7 +46,7 @@ def login():
 
     if user and user.get("password") == password:
         # Convert user ID to string for frontend use
-        user['_id'] = str(user['_id'])
+        user['id'] = str(user.pop('_id'))
 
         # Fetch completed walk IDs and resolve full walk documents
         completed_walk_ids = user.get("completed_walks", [])
@@ -92,6 +92,25 @@ def add_completed_walk(user_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/users/<user_id>/completed_walks', methods=['DELETE'])
+def remove_completed_walk(user_id):
+    walk_id = request.args.get('walk_id')
+
+    if not walk_id:
+        return jsonify({"error": "No walk data provided"}), 400
+
+    try:
+        result = usersCollection.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$pull": {"completed_walks": ObjectId(walk_id)}}
+        )
+
+        if result.modified_count == 1:
+            return jsonify({"message": "Walk removed successfully"}), 200
+        else:
+            return jsonify({"error": "User not found or walk not in completed list"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
