@@ -45,25 +45,19 @@ def login():
     user = usersCollection.find_one({"username": username})
 
     if user and user.get("password") == password:
-        # Convert user ID to string for frontend use
         user['id'] = str(user.pop('_id'))
 
-        # Fetch completed walk IDs and resolve full walk documents
         completed_walk_ids = user.get("completed_walks", [])
         object_ids = [
             ObjectId(wid) if not isinstance(wid, ObjectId) else wid
             for wid in completed_walk_ids
         ]
 
-        # Lookup completed walk documents
         walks = list(walksCollection.find({'_id': {'$in': object_ids}}))
         for walk in walks:
             walk['_id'] = str(walk['_id'])
 
-        # Replace completed_walks field with full documents
         user['completed_walks'] = walks
-
-        # Remove password before sending to frontend
         user.pop('password', None)
 
         return jsonify(user), 200
