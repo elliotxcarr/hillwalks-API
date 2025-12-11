@@ -70,6 +70,39 @@ def login():
 
     return jsonify({"error": "Invalid credentials"}), 401
 
+@app.route('/signup', methods=['POST'])
+def signUp():
+    data = request.get_json()
+
+    username = data.get('username')
+    password = data.get('password')
+    age = data.get('age')
+    email = data.get('email')
+    name = data.get('name')
+
+    if not username or not password:
+        return jsonify({"error": "Username and password are required"}), 400
+
+    existing_user = usersCollection.find_one({"username": username})
+    if existing_user:
+        return jsonify({"error": "Username already exists"}), 409
+
+    new_user = {
+        "username": username,
+        "password": password,
+        "age": age,
+        "email": email,
+        "name": name,
+        "completed_walks": []
+    }
+
+    try:
+        result = usersCollection.insert_one(new_user)
+        new_user['_id'] = str(result.inserted_id)
+        new_user.pop('password', None)
+        return jsonify(new_user), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/users/<user_id>/completed_walks', methods=['POST'])
